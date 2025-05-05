@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use app\components\amocrm\AmocrmClient;
-use app\components\digitalContractApi\DigitalContractApi;
 use app\models\User;
 use app\modules\api\rest\ApiModule;
 use yii\caching\FileCache;

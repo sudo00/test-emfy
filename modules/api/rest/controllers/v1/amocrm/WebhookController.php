@@ -14,23 +14,38 @@ use AmoCRM\Models\NoteType\CommonNote;
 use AmoCRM\OAuth2\Client\Provider\AmoCRMException;
 use JsonException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use Throwable;
 use Yii;
 use yii\base\InvalidConfigException;
+use yii\filters\ContentNegotiator;
 use yii\rest\Controller;
+use yii\web\Response;
 
 final class WebhookController extends Controller
 {
     /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return [
+            [
+                'class' => ContentNegotiator::class,
+                'only' => ['index', 'view'],
+                'formats' => [
+                    'application/json' => Response::FORMAT_JSON,
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @throws InvalidConfigException|JsonException
      */
-    public function actionActualizeToken(): void
+    public function actionRefresh(): array
     {
-        try {
-            Yii::$app->amocrm->getApiClient();
-        } catch (Throwable $e) {
-            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getMessage(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
-        }
+        Yii::$app->amocrm->getApiClient();
+
+        return [];
     }
 
     /**
@@ -38,13 +53,7 @@ final class WebhookController extends Controller
      */
     public function actionIndex(): void
     {
-        try {
-            $this->processLeads(Yii::$app->request->getBodyParams());
-        } catch (Throwable $e) {
-            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode(Yii::$app->amocrm->getApiClient()->getAccessToken(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
-            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getLastRequestInfo(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
-            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getMessage(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
-        }
+        $this->processLeads(Yii::$app->request->getBodyParams());
     }
 
     /**
@@ -110,9 +119,9 @@ final class WebhookController extends Controller
 
             $notes = $apiClient->notes(EntityTypesInterface::LEADS);
             $notes->add($notesCollection);
-        } catch (AmoCRMMissedTokenException | InvalidArgumentException $e) {
+        } catch (AmoCRMMissedTokenException|InvalidArgumentException $e) {
             Yii::error("Error adding note to lead {$leadId}: " . $e->getMessage(), __METHOD__);
-            throw $e;  // Re-throw the exception for higher-level handling if needed
+            throw $e;
         }
     }
 }
