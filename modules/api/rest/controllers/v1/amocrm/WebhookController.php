@@ -40,19 +40,19 @@ final class WebhookController extends Controller
     {
         foreach ($leads as $lead) {
             $noteText = "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: " . date('Y-m-d H:i:s', (int)$lead['created_at']);
-            $this->addNoteToLead($lead['id'], $noteText);
+            $this->addNoteToLead((int)$lead['id'], $noteText);
         }
     }
 
-    private function handleUpdatedLeads(array $leads)
+    private function handleUpdatedLeads(array $leads): void
     {
         foreach ($leads as $lead) {
             $noteText = "Изменена сделка: {$lead['name']}. Время изменения: " . date('Y-m-d H:i:s', (int)$lead['updated_at']);
-            $this->addNoteToLead($lead['id'], $noteText);
+            $this->addNoteToLead((int)$lead['id'], $noteText);
         }
     }
 
-    private function addNoteToLead($leadId, $noteText)
+    private function addNoteToLead(int $leadId, string $noteText): void
     {
         $note = new CommonNote();
         $note->setEntityId($leadId)->setText($noteText);
