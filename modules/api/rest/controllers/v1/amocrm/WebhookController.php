@@ -26,7 +26,11 @@ final class WebhookController extends Controller
      */
     public function actionActualizeToken(): void
     {
-        Yii::$app->amocrm->getApiClient();
+        try {
+            Yii::$app->amocrm->getApiClient();
+        } catch (Throwable $e) {
+            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getMessage(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
+        }
     }
 
     /**
