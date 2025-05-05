@@ -28,7 +28,7 @@ final class AmocrmClient extends Component
 
     public function getApiClient(): AmoCRMApiClient
     {
-        return $this->apiClient->setAccountBaseDomain('https://danilbolotov.amocrm.ru');
+        return $this->apiClient->setAccountBaseDomain('danilbolotov.amocrm.ru');
     }
 
     private function setAccessToken(): void
