@@ -27,6 +27,7 @@ final class WebhookController extends Controller
             $this->processLeads(Yii::$app->request->getBodyParams());
         } catch (Throwable $e) {
             file_put_contents(__DIR__ . '/webhook_log.txt', json_encode(Yii::$app->amocrm->getApiClient()->getAccessToken(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
+            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($this->getLastRequestInfo(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
             file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getMessage(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
         }
     }
