@@ -18,6 +18,7 @@ final class WebhookController extends Controller
      */
     public function actionIndex(): void
     {
+        var_dump(Yii::$app->amocrm->getApiClient());die;
         $this->processLeads(Yii::$app->request->getBodyParams());
     }
 
