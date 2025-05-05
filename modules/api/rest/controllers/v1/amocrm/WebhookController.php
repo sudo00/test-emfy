@@ -18,10 +18,11 @@ final class WebhookController extends Controller
      */
     public function actionIndex(): void
     {
+        var_dump(123);die;
         $rawData = file_get_contents('php://input');
         Yii::error($rawData);
         parse_str($rawData, $data);
-        file_put_contents('webhook_log.txt', json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
+        file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
 //        var_dump(Yii::$app->amocrm->getApiClient());die;
         $this->processLeads(Yii::$app->request->getBodyParams());
     }
