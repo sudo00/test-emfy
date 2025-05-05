@@ -51,10 +51,6 @@ final class WebhookController extends Controller
     private function addNoteToLead($leadId, $noteText) {
         $note = new CommonNote();
         $note->setEntityId($leadId)->setText($noteText);
-        try {
-            Yii::$app->amocrm->getApiClient()->notes(EntityTypesInterface::LEADS)->addOne($note);
-        } catch (AmoCRMApiException $e) {
-            error_log("Ошибка при добавлении заметки: " . $e->getMessage());
-        }
+        Yii::$app->amocrm->getApiClient()->notes(EntityTypesInterface::LEADS)->addOne($note);
     }
 }
