@@ -39,7 +39,7 @@ final class WebhookController extends Controller
     private function handleAddedLeads(array $leads)
     {
         foreach ($leads as $lead) {
-            $noteText = "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: " . date('Y-m-d H:i:s', $lead['created_at']);
+            $noteText = "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: " . date('Y-m-d H:i:s', (int)$lead['created_at']);
             $this->addNoteToLead($lead['id'], $noteText);
         }
     }
@@ -47,7 +47,7 @@ final class WebhookController extends Controller
     private function handleUpdatedLeads(array $leads)
     {
         foreach ($leads as $lead) {
-            $noteText = "Изменена сделка: {$lead['name']}. Время изменения: " . date('Y-m-d H:i:s', $lead['updated_at']);
+            $noteText = "Изменена сделка: {$lead['name']}. Время изменения: " . date('Y-m-d H:i:s', (int)$lead['updated_at']);
             $this->addNoteToLead($lead['id'], $noteText);
         }
     }
