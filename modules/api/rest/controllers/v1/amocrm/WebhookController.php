@@ -21,11 +21,12 @@ final class WebhookController extends Controller
         try {
             $this->processLeads(Yii::$app->request->getBodyParams());
         } catch (\Exception $e) {
-            file_put_contents(__DIR__ . '/webhook_log.txt', $e->getMessage(), FILE_APPEND);
+            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($e->getMessage(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
         }
     }
 
-    private function processLeads($data) {
+    private function processLeads($data)
+    {
         if (isset($data['leads']['add'])) {
             $this->handleAddedLeads($data['leads']['add']);
         }
@@ -34,21 +35,24 @@ final class WebhookController extends Controller
         }
     }
 
-    private function handleAddedLeads(array $leads) {
+    private function handleAddedLeads(array $leads)
+    {
         foreach ($leads as $lead) {
             $noteText = "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: " . date('Y-m-d H:i:s', $lead['created_at']);
             $this->addNoteToLead($lead['id'], $noteText);
         }
     }
 
-    private function handleUpdatedLeads(array $leads) {
+    private function handleUpdatedLeads(array $leads)
+    {
         foreach ($leads as $lead) {
             $noteText = "Изменена сделка: {$lead['name']}. Время изменения: " . date('Y-m-d H:i:s', $lead['updated_at']);
             $this->addNoteToLead($lead['id'], $noteText);
         }
     }
 
-    private function addNoteToLead($leadId, $noteText) {
+    private function addNoteToLead($leadId, $noteText)
+    {
         $note = new CommonNote();
         $note->setEntityId($leadId)->setText($noteText);
         Yii::$app->amocrm->getApiClient()->notes(EntityTypesInterface::LEADS)->addOne($note);
