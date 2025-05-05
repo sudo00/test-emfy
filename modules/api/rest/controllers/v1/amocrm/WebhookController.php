@@ -22,13 +22,13 @@ final class WebhookController extends Controller
         parse_str($rawData, $data);
         try {
 
-            file_put_contents(__DIR__ . '/webhook_log.txt', json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT), FILE_APPEND);
+            file_put_contents(__DIR__ . '/webhook_log.txt', Yii::$app->request->getBodyParams(), FILE_APPEND);
         } catch (\Exception $e) {
             var_dump($e->getMessage());die;
         }
         var_dump(123);die;
 //        var_dump(Yii::$app->amocrm->getApiClient());die;
-        $this->processLeads(Yii::$app->request->getBodyParams());
+        $this->processLeads();
     }
 
     private function processLeads($data) {
