@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace app\modules\api\rest\controllers\v1\amocrm;
 
+use AmoCRM\Collections\NotesCollection;
 use AmoCRM\Exceptions\AmoCRMApiException;
 use AmoCRM\Exceptions\AmoCRMMissedTokenException;
 use AmoCRM\Exceptions\AmoCRMoAuthApiException;
 use AmoCRM\Exceptions\InvalidArgumentException;
 use AmoCRM\Helpers\EntityTypesInterface;
 use AmoCRM\Models\NoteType\CommonNote;
+use AmoCRM\OAuth2\Client\Provider\AmoCRMException;
 use JsonException;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Throwable;
 use Yii;
 use yii\base\InvalidConfigException;
@@ -34,47 +37,48 @@ final class WebhookController extends Controller
 
     /**
      * @throws InvalidArgumentException
-     * @throws AmoCRMApiException
      * @throws AmoCRMMissedTokenException
-     * @throws AmoCRMoAuthApiException
+     * @throws AmoCRMException
+     * @throws IdentityProviderException
      */
     private function processLeads(array $data): void
     {
-        if (isset($data['leads']['add'])) {
-            $this->handleAddedLeads($data['leads']['add']);
-        }
-        if (isset($data['leads']['update'])) {
-            $this->handleUpdatedLeads($data['leads']['update']);
-        }
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     * @throws AmoCRMApiException
-     * @throws AmoCRMMissedTokenException
-     * @throws AmoCRMoAuthApiException
-     */
-    private function handleAddedLeads(array $leads): void
-    {
-        foreach ($leads as $lead) {
-            $noteText = "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: " . date('Y-m-d H:i:s', (int)$lead['created_at']);
-            $this->addNoteToLead((int)$lead['id'], $noteText);
+        if (isset($data['leads'])) {
+            if (isset($data['leads']['add'])) {
+                $this->handleLeads('add', $data['leads']['add']);
+            }
+            if (isset($data['leads']['update'])) {
+                $this->handleLeads('update', $data['leads']['update']);
+            }
         }
     }
 
     /**
      * @throws InvalidArgumentException
-     * @throws AmoCRMApiException
      * @throws AmoCRMMissedTokenException
-     * @throws AmoCRMoAuthApiException
+     * @throws AmoCRMException
+     * @throws IdentityProviderException
      */
-    private function handleUpdatedLeads(array $leads): void
+    private function handleLeads(string $operation, array $leads): void
     {
         foreach ($leads as $lead) {
-            $noteText = "Изменена сделка: {$lead['name']}. Время изменения: " . date('Y-m-d H:i:s', (int)$lead['updated_at']);
-            $this->addNoteToLead((int)$lead['id'], $noteText);
+            $leadId = (int)$lead['id'];
+            $noteText = $this->generateLeadNote($operation, $lead);
+            $this->addNoteToLead($leadId, $noteText);
         }
     }
+
+    private function generateLeadNote(string $operation, array $lead): string
+    {
+        $dateTime = date('Y-m-d H:i:s', (int)$lead[($operation === 'add' ? 'created_at' : 'updated_at')]);
+
+        if ($operation === 'add') {
+            return "Создана сделка: {$lead['name']}. Ответственный: {$lead['responsible_user_id']}. Время добавления: {$dateTime}";
+        }
+
+        return "Изменена сделка: {$lead['name']}. Время изменения: {$dateTime}";
+    }
+
 
     /**
      * @throws InvalidArgumentException
@@ -84,8 +88,19 @@ final class WebhookController extends Controller
      */
     private function addNoteToLead(int $leadId, string $noteText): void
     {
-        $note = new CommonNote();
-        $note->setEntityId($leadId)->setText($noteText);
-        Yii::$app->amocrm->getApiClient()->notes(EntityTypesInterface::LEADS)->addOne($note);
+        try {
+            $apiClient = Yii::$app->amocrm->getApiClient();
+            $notesCollection = new NotesCollection();
+            $commonNote = new CommonNote();
+
+            $commonNote->setEntityId($leadId)->setText($noteText);
+            $notesCollection->add($commonNote);
+
+            $notes = $apiClient->notes(EntityTypesInterface::LEADS);
+            $notes->add($notesCollection);
+        } catch (AmoCRMMissedTokenException | InvalidArgumentException $e) {
+            Yii::error("Error adding note to lead {$leadId}: " . $e->getMessage(), __METHOD__);
+            throw $e;  // Re-throw the exception for higher-level handling if needed
+        }
     }
 }
