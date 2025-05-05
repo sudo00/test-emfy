@@ -24,6 +24,14 @@ final class WebhookController extends Controller
     /**
      * @throws InvalidConfigException|JsonException
      */
+    public function actionActualizeToken(): void
+    {
+        Yii::$app->amocrm->getApiClient();
+    }
+
+    /**
+     * @throws InvalidConfigException|JsonException
+     */
     public function actionIndex(): void
     {
         try {
